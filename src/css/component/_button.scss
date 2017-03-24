@@ -1,0 +1,14 @@
+.btn {
+  display: inline-block;
+  cursor: pointer;
+}
+
+.btn-block {
+  display: block;
+}
+
+.palin-text-btn {
+  &:hover {
+    text-decoration: underline;
+  }
+}

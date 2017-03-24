@@ -1,0 +1,17 @@
+.app-left-nav {
+  width: 200px;
+  height: 100%;
+  border-right: 1px solid $base-border-color;
+}
+
+.app-nav {
+  li {
+    list-style: none;
+    a {
+      display: block;
+      padding: 10px;
+      text-decoration: none;
+      color: $base-font-color;
+    }
+  }
+}

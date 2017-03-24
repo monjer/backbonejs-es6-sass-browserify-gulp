@@ -1,0 +1,19 @@
+.app-header {
+  .app-header-inner {
+    padding: 15px 10px;
+  }
+  border-bottom: 1px solid $base-border-color;
+}
+
+.app-header-inner {
+  .app-title {
+    font-size: 16px;
+    font-weight: 600;
+  }
+  .palin-text-btn {
+    font-size: 13px;
+  }
+  .logout-btn {
+    margin-left: 10px;
+  }
+}
