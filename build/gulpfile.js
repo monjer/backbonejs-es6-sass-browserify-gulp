@@ -18,20 +18,26 @@ var browserSync = require('browser-sync').create();
 var autoprefixer = require('gulp-autoprefixer');
 var cssnano = require('gulp-cssnano');
 var uglify = require('gulp-uglify');
+var runSequence = require('run-sequence');
 
+var yargs = require('yargs');
+yargs.boolean('serve');
+var argv = yargs.argv;
 //
 // clean
 //
 gulp.task('clean', function() {
-  return del([conf.dist.cwd]);
+  return del([conf.dist.cwd], {
+    force: true
+  });
 });
 
-
 //
-// develop 
+// dev - watch - js app files
 //
 gulp.task('watch-js', function(cb) {
   livereload.listen();
+  var dir = path.dirname(conf.src.js.entry.application);
   var opts = {
     entries: conf.src.js.entry.application,
     debug: true
@@ -44,7 +50,9 @@ gulp.task('watch-js', function(cb) {
     bundle();
   })
   b.on('bundle', function(bundle) {
-    browserSync.reload();
+    if (argv.serve) {
+      browserSync.reload();
+    }
   })
 
   bundle();
@@ -59,13 +67,15 @@ gulp.task('watch-js', function(cb) {
       .pipe(rename(getBundleName(conf.src.js.entry.application)))
       .pipe(sourcemaps.init({ loadMaps: true }))
       .pipe(sourcemaps.write('./'))
-      .pipe(gulp.dest(conf.src.js.cwd))
+      .pipe(gulp.dest(dir))
   }
 
 });
-
+//
+// dev - js app files
+//
 gulp.task('dev-js', function(cb) {
-
+  var dir = path.dirname(conf.src.js.entry.application);
   var opts = {
     entries: conf.src.js.entry.application,
     debug: true
@@ -77,39 +87,37 @@ gulp.task('dev-js', function(cb) {
     })
     .pipe(source(conf.src.js.entry.application))
     .pipe(buffer())
-    .pipe(rename({
-      suffix: '-bundle'
-    }))
+    .pipe(rename(getBundleName(conf.src.js.entry.application)))
     .pipe(sourcemaps.init({ loadMaps: true }))
     .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest(conf.src.js.cwd))
+    .pipe(gulp.dest(dir))
 });
 
+//
+// dev - js lib files
+//
 gulp.task('dev-js-lib', function(cb) {
   var dir = path.dirname(conf.src.js.entry.lib);
-  console.log(dir);
   var opts = {
     entries: conf.src.js.entry.lib,
     debug: true
   };
   var b = browserify(opts)
-  b.bundle()
+  return b.bundle()
     .on('error', function(err) {
       gutil.log(err)
     })
     .pipe(source(conf.src.js.entry.lib))
     .pipe(buffer())
-    .pipe(rename({
-      suffix: '-bundle'
-    }))
-    .pipe(gulp.dest(conf.src.js.cwd))
-    // .pipe(sourcemaps.init({ loadMaps: true
-    // }))
-    // .pipe(sourcemaps.write('./'))
-    // .pipe(gulp.dest(conf.src.js.cwd))
-
+    .pipe(rename(getBundleName(conf.src.js.entry.lib)))
+    .pipe(sourcemaps.init({ loadMaps: true }))
+    .pipe(sourcemaps.write('./'))
+    .pipe(gulp.dest(dir))
 });
 
+//
+// dev - css files
+//
 gulp.task('dev-css', function() {
   var dir = path.dirname(conf.src.css.entry.application);
   var sassOpt = {
@@ -121,21 +129,25 @@ gulp.task('dev-css', function() {
     .pipe(autoprefixer())
     .pipe(gulp.dest(dir));
 });
-
+//
+// dev - watch - css app files
+//
 gulp.task('watch-css-app', ['dev-css'], function() {
   var pattern = path.resolve(conf.src.css.cwd + '/**/*.scss')
   var watcher = gulp.watch(pattern, ['dev-css']);
   watcher.on('change', function(event) {
     gutil.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
-    browserSync.reload();
+    if (argv.serve) {
+      browserSync.reload();
+    }
+
   });
 });
-
-gulp.task('dev', ['serve', 'watch-js', 'watch-css-app'], function() {
-
-});
-
+//
+// dev - static file server
+//
 gulp.task('serve', function() {
+  gutil.log('server started ');
   browserSync.init({
     server: {
       baseDir: "../"
@@ -143,15 +155,27 @@ gulp.task('serve', function() {
   });
 });
 
+
 //
-// dist
+// dev - task entry
+//
+var devTasks = ['watch-js', 'watch-css-app'];
+if (argv.serve) {
+  devTasks.unshift('serve');
+}
+gulp.task('dev', devTasks, function(cb) {
+  gutil.log('dev mode started ');
+});
+
+
+//
+// dist - js files
 //
 gulp.task('dist-js', ['dev-js'], function() {
   var jsPaths = [conf.src.js.entry.application, conf.src.js.entry.lib]
   jsPaths = _.map(jsPaths, function(path) {
     return path.replace('.js', '-bundle.js');
   });
-  console.log(jsPaths)
   gulp.src(jsPaths)
     .pipe(uglify())
     .pipe(rename({
@@ -159,7 +183,9 @@ gulp.task('dist-js', ['dev-js'], function() {
     }))
     .pipe(gulp.dest(conf.dist.js.cwd));
 });
-
+//
+// dist - css files
+//
 gulp.task('dist-css', ['dev-css'], function() {
   var cssPath = conf.src.css.entry.application.replace('scss', 'css');
   gulp.src(cssPath)
@@ -170,6 +196,15 @@ gulp.task('dist-css', ['dev-css'], function() {
     .pipe(gulp.dest(conf.dist.css.cwd));
 });
 
-gulp.task('dist', ['dist-js', 'dist-css'], function() {
+//
+// dist - entry
+//
+gulp.task('dist', function() {
+  runSequence(
+    'dist-js',
+    'dist-css',
+    function() {
+      gutil.log('finish dist');
+    });
 
 });

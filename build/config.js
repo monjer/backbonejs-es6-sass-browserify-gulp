@@ -9,6 +9,7 @@ var conf = {
         lib: '../src/js/lib/lib.js'
       }
     },
+
     css: {
       cwd: '../src/css',
       entry: {

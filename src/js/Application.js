@@ -6,10 +6,12 @@ import MNAppHeaderView from './view/layout/MNAppHeaderView.js'
 import MNAppMainView from './view/layout/MNAppMainView.js'
 
 export default class Application extends Backbone.View {
+
   initialize(props) {
     super.initialize(props);
     this.render();
   }
+
   render() {
     this.$el.append(ApplicationTpl);
     this.headerView = new MNAppHeaderView();
@@ -18,8 +20,9 @@ export default class Application extends Backbone.View {
     this.$('.app-inner').append(this.mainView.el);
     return this;
   }
+
   static boot() {
-    var application = new Application();
+    let application = new Application();
     $('body').append(application.el);
   }
 }

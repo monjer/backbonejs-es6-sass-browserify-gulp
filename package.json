@@ -4,7 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dist": "gulp --gulpfile ./build/gulpfile.js dist",
+    "dev": "gulp --gulpfile ./build/gulpfile.js dev",
+    "dev-serve": "gulp --gulpfile ./build/gulpfile.js dev --serve",
+    "serve": "gulp --gulpfile ./build/gulpfile.js serve"
   },
   "author": "",
   "license": "ISC",
@@ -25,6 +28,7 @@
     "gulp-uglify": "^2.1.2",
     "gulp-util": "^3.0.8",
     "require-template": "^1.0.9",
+    "run-sequence": "^1.2.2",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.1.0",
     "watchify": "^3.9.0"
@@ -34,14 +38,13 @@
     "bourbon": "^4.3.3",
     "jquery": "^3.2.1",
     "normalize-scss": "^6.0.0",
-    "normalize.css": "^5.0.0",
-    "underscore": "^1.8.3"
+    "underscore": "^1.8.3",
+    "yargs": "^7.0.2"
   },
   "browserify": {
     "transform": [
       [
-        "babelify",
-        {
+        "babelify", {
           "presets": [
             "es2015"
           ]
