@@ -121,11 +121,13 @@ gulp.task('dev-js-lib', function(cb) {
 gulp.task('dev-css', function() {
   var dir = path.dirname(conf.src.css.entry.application);
   var sassOpt = {
-    sourceMapEmbed: false,
+    sourceMapEmbed: true,
     cache: false
   }
   return gulp.src(conf.src.css.entry.application)
+    .pipe(sourcemaps.init())
     .pipe(sass(sassOpt).on('error', sass.logError))
+    .pipe(sourcemaps.write())
     .pipe(autoprefixer())
     .pipe(gulp.dest(dir));
 });
@@ -159,10 +161,11 @@ gulp.task('serve', function() {
 //
 // dev - task entry
 //
-var devTasks = ['watch-js', 'watch-css-app'];
+var devTasks = ['dev-js-lib', 'watch-js', 'watch-css-app'];
 if (argv.serve) {
   devTasks.unshift('serve');
 }
+
 gulp.task('dev', devTasks, function(cb) {
   gutil.log('dev mode started ');
 });
@@ -171,7 +174,7 @@ gulp.task('dev', devTasks, function(cb) {
 //
 // dist - js files
 //
-gulp.task('dist-js', ['dev-js'], function() {
+gulp.task('dist-js', ['dev-js', 'dev-js-lib'], function() {
   var jsPaths = [conf.src.js.entry.application, conf.src.js.entry.lib]
   jsPaths = _.map(jsPaths, function(path) {
     return path.replace('.js', '-bundle.js');
