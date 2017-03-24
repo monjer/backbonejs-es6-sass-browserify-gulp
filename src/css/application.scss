@@ -1,3 +1,7 @@
+/**
+ * application.scss
+ */
+
 //
 // base
 //
@@ -20,6 +24,9 @@ body {
   height: 100%;
 }
 
+//
+// application - layout
+//
 @import "./layout/app-header";
 @import "./layout/app-main";
 @import "./layout/app-leftnav";
