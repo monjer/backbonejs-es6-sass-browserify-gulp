@@ -43,7 +43,7 @@ Besides the process of watching , it will also start browserSync.
 ```
 npm run dist
 ```
-This command will bundle the js and css files , compress them use uglify , and output them to `/dist` folder.
+This command will bundle the js and css files , compress them use uglify , and output them to `dist` folder.
 
 ### serve
 
