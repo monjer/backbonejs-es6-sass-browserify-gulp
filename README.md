@@ -54,6 +54,13 @@ npm run serve
 
 This command will start the browserSync .
 
+### clean
+
+```
+npm run clean
+```
+will remove `dist` folder.
+
 
 ## What's inside
 
