@@ -1,7 +1,7 @@
 {
-  "name": "browserify-es6-sass-gulp",
+  "name": "backbonejs-es6-sass-browserify-gulp",
   "version": "1.0.0",
-  "description": "",
+  "description": "A boilerplate using backbonejs with es6+sass+browserify+gulp",
   "main": "index.js",
   "scripts": {
     "dist": "gulp --gulpfile ./build/gulpfile.js dist",
@@ -10,7 +10,7 @@
     "serve": "gulp --gulpfile ./build/gulpfile.js serve",
     "clean": "gulp --gulpfile ./build/gulpfile.js clean"
   },
-  "author": "",
+  "author": "monjer",
   "license": "ISC",
   "devDependencies": {
     "babel-preset-es2015": "^6.24.0",
@@ -46,7 +46,8 @@
   "browserify": {
     "transform": [
       [
-        "babelify", {
+        "babelify",
+        {
           "presets": [
             "es2015"
           ]
@@ -60,5 +61,20 @@
     "jquery": "$",
     "Backbone": "Backbone",
     "underscore": "_"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monjer/backbonejs-es6-sass-browserify-gulp.git"
+  },
+  "keywords": [
+    "backbonejs",
+    "sass",
+    "gulp",
+    "browserify",
+    "es6"
+  ],
+  "bugs": {
+    "url": "https://github.com/monjer/backbonejs-es6-sass-browserify-gulp/issues"
+  },
+  "homepage": "https://github.com/monjer/backbonejs-es6-sass-browserify-gulp#readme"
 }

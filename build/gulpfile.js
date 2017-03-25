@@ -71,6 +71,7 @@ gulp.task('watch-js', function(cb) {
       .pipe(sourcemaps.write('./'))
       .pipe(gulp.dest(dir))
   }
+  cb();
 
 });
 
@@ -141,7 +142,7 @@ gulp.task('dev-css', function() {
 gulp.task('watch-css-app', ['dev-css'], function() {
   var pattern = path.resolve(conf.src.css.cwd + '/**/*.scss')
   var watcher = gulp.watch(pattern, ['dev-css']);
-  watcher.on('change', function(event) {
+  return watcher.on('change', function(event) {
     gutil.log('File ' + event.path + ' was ' + event.type + ', running tasks...');
     if (argv.serve) {
       browserSync.reload();
@@ -166,13 +167,23 @@ gulp.task('serve', function() {
 //
 // dev - task entry
 //
-var devTasks = ['dev-js-lib', 'watch-js', 'watch-css-app'];
-if (argv.serve) {
-  devTasks.unshift('serve');
-}
 
-gulp.task('dev', devTasks, function(cb) {
-  gutil.log('dev mode started ');
+
+gulp.task('dev', function(cb) {
+
+  function done() {
+    gutil.log('dev mode started ');
+    cb();
+  }
+  var devTasks = ['dev-js-lib', 'watch-js', 'watch-css-app'];
+  runSequence(devTasks, function(err) {
+    if (argv.serve) {
+      runSequence('serve', done);
+    } else {
+      done();
+    }
+  });
+
 });
 
 
@@ -184,7 +195,7 @@ gulp.task('dist-js', ['dev-js', 'dev-js-lib'], function() {
   jsPaths = _.map(jsPaths, function(path) {
     return path.replace('.js', '-bundle.js');
   });
-  gulp.src(jsPaths)
+  return gulp.src(jsPaths)
     .pipe(uglify())
     .pipe(rename({
       suffix: '-mini'
@@ -197,7 +208,7 @@ gulp.task('dist-js', ['dev-js', 'dev-js-lib'], function() {
 //
 gulp.task('dist-css', ['dev-css'], function() {
   var cssPath = conf.src.css.entry.application.replace('scss', 'css');
-  gulp.src(cssPath)
+  return gulp.src(cssPath)
     .pipe(cssnano())
     .pipe(rename({
       suffix: '-mini'
@@ -208,11 +219,12 @@ gulp.task('dist-css', ['dev-css'], function() {
 //
 // dist - entry
 //
-gulp.task('dist', function() {
+gulp.task('dist', function(cb) {
   runSequence(
     'dist-js',
     'dist-css',
     function() {
+      cb();
       gutil.log('finish dist');
     });
 
