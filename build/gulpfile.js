@@ -13,7 +13,6 @@ var rename = require('gulp-rename');
 var sass = require('gulp-sass');
 var sourcemaps = require('gulp-sourcemaps');
 var _ = require('underscore');
-var livereload = require('gulp-livereload');
 var browserSync = require('browser-sync').create();
 var autoprefixer = require('gulp-autoprefixer');
 var cssnano = require('gulp-cssnano');
@@ -23,6 +22,9 @@ var runSequence = require('run-sequence');
 var yargs = require('yargs');
 yargs.boolean('serve');
 var argv = yargs.argv;
+
+
+
 //
 // clean
 //
@@ -36,7 +38,7 @@ gulp.task('clean', function() {
 // dev - watch - js app files
 //
 gulp.task('watch-js', function(cb) {
-  livereload.listen();
+
   var dir = path.dirname(conf.src.js.entry.application);
   var opts = {
     entries: conf.src.js.entry.application,
@@ -71,6 +73,7 @@ gulp.task('watch-js', function(cb) {
   }
 
 });
+
 //
 // dev - js app files
 //
@@ -131,6 +134,7 @@ gulp.task('dev-css', function() {
     .pipe(autoprefixer())
     .pipe(gulp.dest(dir));
 });
+
 //
 // dev - watch - css app files
 //
@@ -145,6 +149,7 @@ gulp.task('watch-css-app', ['dev-css'], function() {
 
   });
 });
+
 //
 // dev - static file server
 //
@@ -186,6 +191,7 @@ gulp.task('dist-js', ['dev-js', 'dev-js-lib'], function() {
     }))
     .pipe(gulp.dest(conf.dist.js.cwd));
 });
+
 //
 // dist - css files
 //

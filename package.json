@@ -7,7 +7,8 @@
     "dist": "gulp --gulpfile ./build/gulpfile.js dist",
     "dev": "gulp --gulpfile ./build/gulpfile.js dev",
     "dev-serve": "gulp --gulpfile ./build/gulpfile.js dev --serve",
-    "serve": "gulp --gulpfile ./build/gulpfile.js serve"
+    "serve": "gulp --gulpfile ./build/gulpfile.js serve",
+    "clean": "gulp --gulpfile ./build/gulpfile.js clean"
   },
   "author": "",
   "license": "ISC",
@@ -23,7 +24,6 @@
     "gulp-autoprefixer": "^3.1.1",
     "gulp-concat": "^2.6.1",
     "gulp-cssnano": "^2.1.2",
-    "gulp-livereload": "^3.8.1",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^3.1.0",
     "gulp-sourcemaps": "^2.4.1",
@@ -46,8 +46,7 @@
   "browserify": {
     "transform": [
       [
-        "babelify",
-        {
+        "babelify", {
           "presets": [
             "es2015"
           ]
