@@ -1,44 +1,34 @@
-var path = require('path');
 var conf = {
   src: {
     js: {
       cwd: '../src/js',
-
-      entry: {
-        application: '../src/js/Application.js',
-        lib: '../src/js/lib/lib.js'
+      application: {
+        entry: '../src/js/Application.js',
+      },
+      lib: {
+        entry: '../src/js/lib/lib.js'
       }
     },
-
     css: {
       cwd: '../src/css',
-      entry: {
-        application: '../src/css/application.scss'
+      application: {
+        entry: '../src/css/application.scss'
       }
     }
   },
   dist: {
     cwd: '../dist',
     js: {
-      cwd: '../dist/js'
+      cwd: '../dist/js',
+      app: 'app-mini.js',
+      lib: 'lib-mini.js'
     },
     css: {
-      cwd: '../dist/css'
+      cwd: '../dist/css',
+      app: 'app-mini.css'
     }
   }
 
 }
 
-function map2BundleName(filepath) {
-  var name = path.basename(filepath, path.extname(filepath)) + '-bundle' + path.extname(filepath);
-  filepath = path.resolve(filepath, '../', name);
-  return filepath;
-}
-
-function getBundleName(filepath) {
-  var name = path.basename(filepath, path.extname(filepath)) + '-bundle' + path.extname(filepath);
-  return name;
-}
-exports.conf = conf;
-exports.map2BundleName = map2BundleName
-exports.getBundleName = getBundleName;
+module.exports = conf;

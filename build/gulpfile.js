@@ -1,15 +1,13 @@
 var gulp = require('gulp');
 var path = require('path');
-var conf = require('./config.js').conf;
-var map2BundleName = require('./config.js').map2BundleName;
-var getBundleName = require('./config.js').getBundleName;
+var conf = require('./config.js');
 var buffer = require('vinyl-buffer');
 var source = require('vinyl-source-stream');
 var del = require('del');
 var browserify = require('browserify');
 var gutil = require('gulp-util');
 var watchify = require('watchify');
-var rename = require('gulp-rename');
+var rename = require('rename');
 var sass = require('gulp-sass');
 var sourcemaps = require('gulp-sourcemaps');
 var _ = require('underscore');
@@ -18,11 +16,12 @@ var autoprefixer = require('gulp-autoprefixer');
 var cssnano = require('gulp-cssnano');
 var uglify = require('gulp-uglify');
 var runSequence = require('run-sequence');
-
 var yargs = require('yargs');
+var es = require('event-stream');
+var collapse = require('bundle-collapser/plugin');
+
 yargs.boolean('serve');
 var argv = yargs.argv;
-
 
 
 //
@@ -34,112 +33,130 @@ gulp.task('clean', function() {
   });
 });
 
-//
-// dev - watch - js app files
-//
-gulp.task('watch-js', function(cb) {
-
-  var dir = path.dirname(conf.src.js.entry.application);
-  var opts = {
-    entries: conf.src.js.entry.application,
-    debug: true
+/**
+ * Use browserify to bundle file , watch the file change and reload the browser
+ *
+ * @param {string} opts.entry - javascript entry file path
+ * @param {string} opts.dest - dest folder path
+ * @param {boolean} opts.watch - watch file change
+ * @param {boolean} opts.debug - if is debug mode
+ * @param {string} opts.bundle - bundle output file name
+ * @return {stream}
+ */
+function bundleJS(opts) {
+  var entry = opts.entry;
+  var dest = opts.dest;
+  var bundleFile = path.basename(opts.bundle || rename(opts.entry, { suffix: '-bundle' }));
+  var watch = opts.watch;
+  var debug = _.isUndefined(opts.debug) ? true : opts.debug;
+  var bopts = {
+    entries: entry,
+    debug: debug,
+    plugin: []
   };
-  var b = watchify(browserify(opts))
 
-  b.on('update', function() {
-    gutil.log('refresh js bundle  ' + conf.src.js.entry.application);
+  if (watch) {
+    bopts = _.extend(bopts, watchify.args, {
+      plugin: [watchify]
+    });
+  }
+  if (!debug) {
+    bopts.plugin.push(collapse)
+  }
 
-    bundle();
-  })
-  b.on('bundle', function(bundle) {
-    if (argv.serve) {
+  var b = browserify(bopts)
+
+  b.on('bundle', function() {
+    gutil.log('finish bundle js   ' + entry);
+    if (watch && argv.serve) {
       browserSync.reload();
     }
   })
 
-  bundle();
 
-  function bundle() {
-    b.bundle()
+  function bundle(b) {
+    var bundler = b.bundle()
       .on('error', function(err) {
         gutil.log(err)
       })
-      .pipe(source(conf.src.js.entry.application))
-      .pipe(buffer())
-      .pipe(rename(getBundleName(conf.src.js.entry.application)))
-      .pipe(sourcemaps.init({ loadMaps: true }))
-      .pipe(sourcemaps.write('./'))
-      .pipe(gulp.dest(dir))
-  }
-  cb();
+      .pipe(source(bundleFile))
+      .pipe(buffer());
 
+    if (!debug) {
+      bundler = bundler.pipe(uglify());
+    }
+
+    return bundler.pipe(sourcemaps.init({ loadMaps: true }))
+      .pipe(sourcemaps.write('./'))
+      .pipe(gulp.dest(dest))
+  }
+
+  if (watch) {
+    b.on('update', function() {
+      gutil.log('start bundle js   ' + entry);
+      bundle(b);
+    })
+    return bundle(b);
+
+  } else {
+    return bundle(b);
+  }
+}
+
+//
+// dev - watch - js app files
+//
+gulp.task('watch-js-app', function(cb) {
+
+  return bundleJS({
+    entry: conf.src.js.application.entry,
+    dest: conf.src.js.cwd,
+    watch: true
+  });
 });
 
 //
 // dev - js app files
 //
-gulp.task('dev-js', function(cb) {
-  var dir = path.dirname(conf.src.js.entry.application);
-  var opts = {
-    entries: conf.src.js.entry.application,
-    debug: true
-  };
-  var b = browserify(opts)
-  return b.bundle()
-    .on('error', function(err) {
-      gutil.log(err)
-    })
-    .pipe(source(conf.src.js.entry.application))
-    .pipe(buffer())
-    .pipe(rename(getBundleName(conf.src.js.entry.application)))
-    .pipe(sourcemaps.init({ loadMaps: true }))
-    .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest(dir))
+gulp.task('dev-js-app', function(cb) {
+  return bundleJS({
+    entry: conf.src.js.application.entry,
+    dest: conf.src.js.cwd,
+    watch: false
+  })
 });
 
 //
 // dev - js lib files
 //
 gulp.task('dev-js-lib', function(cb) {
-  var dir = path.dirname(conf.src.js.entry.lib);
-  var opts = {
-    entries: conf.src.js.entry.lib,
-    debug: true
-  };
-  var b = browserify(opts)
-  return b.bundle()
-    .on('error', function(err) {
-      gutil.log(err)
-    })
-    .pipe(source(conf.src.js.entry.lib))
-    .pipe(buffer())
-    .pipe(rename(getBundleName(conf.src.js.entry.lib)))
-    .pipe(sourcemaps.init({ loadMaps: true }))
-    .pipe(sourcemaps.write('./'))
-    .pipe(gulp.dest(dir))
+  return bundleJS({
+    entry: conf.src.js.lib.entry,
+    dest: conf.src.js.cwd,
+    watch: false
+  });
 });
 
 //
 // dev - css files
 //
-gulp.task('dev-css', function() {
-  var dir = path.dirname(conf.src.css.entry.application);
+gulp.task('dev-css-app', function() {
   var sassOpt = {
     sourceMapEmbed: true,
     cache: false
   }
-  return gulp.src(conf.src.css.entry.application)
+  return gulp.src(conf.src.css.application.entry)
     .pipe(sourcemaps.init())
     .pipe(sass(sassOpt).on('error', sass.logError))
     .pipe(sourcemaps.write())
     .pipe(autoprefixer())
-    .pipe(gulp.dest(dir));
+    .pipe(gulp.dest(conf.src.css.cwd));
 });
 
 //
 // dev - watch - css app files
 //
-gulp.task('watch-css-app', ['dev-css'], function() {
+gulp.task('watch-css-app', ['dev-css-app'], function() {
   var pattern = path.resolve(conf.src.css.cwd + '/**/*.scss')
   var watcher = gulp.watch(pattern, ['dev-css']);
   return watcher.on('change', function(event) {
@@ -167,15 +184,13 @@ gulp.task('serve', function() {
 //
 // dev - task entry
 //
-
-
 gulp.task('dev', function(cb) {
 
   function done() {
     gutil.log('dev mode started ');
     cb();
   }
-  var devTasks = ['dev-js-lib', 'watch-js', 'watch-css-app'];
+  var devTasks = ['dev-js-lib', 'watch-js-app', 'watch-css-app'];
   runSequence(devTasks, function(err) {
     if (argv.serve) {
       runSequence('serve', done);
@@ -186,34 +201,48 @@ gulp.task('dev', function(cb) {
 
 });
 
-
 //
 // dist - js files
 //
-gulp.task('dist-js', ['dev-js', 'dev-js-lib'], function() {
-  var jsPaths = [conf.src.js.entry.application, conf.src.js.entry.lib]
-  jsPaths = _.map(jsPaths, function(path) {
-    return path.replace('.js', '-bundle.js');
+gulp.task('dist-js', function() {
+
+  var entries = [
+    conf.src.js.application.entry,
+    conf.src.js.lib.entry
+  ]
+  var tasks = _.map(entries, function(entry) {
+    return bundleJS({
+      entry: entry,
+      dest: conf.dist.js.cwd,
+      watch: false,
+      debug: false,
+      bundle: rename(entry, { suffix: '-bundle-mini' })
+    });
   });
-  return gulp.src(jsPaths)
-    .pipe(uglify())
-    .pipe(rename({
-      suffix: '-mini'
-    }))
-    .pipe(gulp.dest(conf.dist.js.cwd));
+  return es.merge.call(null, tasks)
 });
 
 //
 // dist - css files
 //
-gulp.task('dist-css', ['dev-css'], function() {
-  var cssPath = conf.src.css.entry.application.replace('scss', 'css');
-  return gulp.src(cssPath)
-    .pipe(cssnano())
-    .pipe(rename({
-      suffix: '-mini'
-    }))
+gulp.task('dist-css', ['dev-css-app'], function() {
+  var sassOpt = {
+    sourceMapEmbed: false,
+    cache: false
+  }
+
+  var files = [
+    conf.src.css.application.entry
+  ]
+
+  files = _.map(files, function(file) {
+    return rename(file, { extname: '.css' })
+  });
+  return gulp.src(files)
+    .pipe(cssnano({ sourcemap: false, zIndex: false }))
+    .pipe(autoprefixer())
     .pipe(gulp.dest(conf.dist.css.cwd));
+
 });
 
 //
@@ -227,5 +256,17 @@ gulp.task('dist', function(cb) {
       cb();
       gutil.log('finish dist');
     });
+});
 
+//
+// dist - entry
+//
+gulp.task('dist-serve', function(cb) {
+  runSequence(
+    'dist-js',
+    'dist-css',
+    function() {
+      cb();
+      gutil.log('finish dist');
+    });
 });
