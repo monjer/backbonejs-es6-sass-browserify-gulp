@@ -1,6 +1,6 @@
 {
   "name": "backbonejs-es6-sass-browserify-gulp",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A boilerplate using backbonejs with es6+sass+browserify+gulp",
   "main": "index.js",
   "scripts": {
